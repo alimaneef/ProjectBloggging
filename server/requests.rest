@@ -1,0 +1,17 @@
+#   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2NDg3OTFlZjEzYjgyYTg5Y2Y5OTVjZCIsImlhdCI6MTcxNjAyNTYzMH0.NgA-VBocAxXo4Az8bweZI_RviiDNUWMhUKVP-l4Sd20"
+
+# POST http://localhost:3000/create-blog
+# Content-Type: application/json
+
+# {
+#     "fullname":"spiderman",
+#     "email":"spider@gmail.com",
+#     "password":"Spider123"
+# }
+
+POST   http://localhost:3000/get-profile
+Content-Type:application/json 
+
+{
+    "name":"maha"
+}
