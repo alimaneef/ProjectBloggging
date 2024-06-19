@@ -29,7 +29,7 @@ const ProfilePage = () => {
     let [profile,setProfile]=useState(profileDataStructure);
     let [loader,setLoader]=useState(true);
 
-    let [blogs,setBlogs]=useState(null);
+    // let [blogs,setBlogs]=useState(null);
 
     let {personal_info:{fullname,username:profile_username,profile_img,bio},account_info:{total_posts,total_reads},social_links,joinedAt}=profile
     
@@ -48,9 +48,9 @@ const ProfilePage = () => {
         })
     }
 
-    const getBlogs=({page=1,user_id})={
+    // const getBlogs=({page=1,user_id})={
 
-    }
+    // }
 
     useEffect(()=>{
         resetStates();
