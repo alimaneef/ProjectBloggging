@@ -282,7 +282,7 @@ server.get('/trending-blogs',(req,res)=>{
 
 server.post('/search-blogs',(req,res)=>{
     
-    let {tag,page,query}=req.body;
+    let {tag,page,query,author}=req.body;
     let findQuery=({tags:tag,draft:false});
 
 
@@ -291,6 +291,9 @@ server.post('/search-blogs',(req,res)=>{
     }
     else if(query){
         findQuery={draft:false,title:new RegExp(query,'i')}
+    }
+    else if(author){
+        findQuery={author,draft:false}
     }
     let maxLimit=2;
     
@@ -311,16 +314,16 @@ server.post('/search-blogs',(req,res)=>{
 
 server.post('/search-blogs-count',(req,res)=>{
     let {tag,query,author}=req.body;
-    let findQuery;
+    let findQuery;   
     if(tag){
         findQuery=({tags:tag,draft:false});
     }
-    // else if(query){
-    //     findQuery={draft:false,title:new RegExp(query,'i')}
-    // }
-    // else if(author){
-    //     findQuery={draft:false,author}
-    // }
+    else if(query){
+        findQuery={draft:false,title:new RegExp(query,'i')}
+    }
+    else if(author){
+        findQuery={author,draft:false}
+    }
 
     Blog.countDocuments(findQuery)
     .then(count=>{
