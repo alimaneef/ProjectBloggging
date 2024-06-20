@@ -5,6 +5,8 @@ import AnimationWrapper from '../common/page-animation';
 import Loader from '../components/loader.component';
 import { UserContext } from '../App';
 import AboutUser from '../components/about.component';
+import FilterPaginationData from '../common/filter-pagination-data';
+import InPageNavigation from '../components/inpage-navigation.component';
 
 export const profileDataStructure={
     personal_info:{
@@ -29,7 +31,7 @@ const ProfilePage = () => {
     let [profile,setProfile]=useState(profileDataStructure);
     let [loader,setLoader]=useState(true);
 
-    // let [blogs,setBlogs]=useState(null);
+    let [blogs,setBlogs]=useState(null);
 
     let {personal_info:{fullname,username:profile_username,profile_img,bio},account_info:{total_posts,total_reads},social_links,joinedAt}=profile
     
@@ -40,6 +42,7 @@ const ProfilePage = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN+'/get-profile',{name:profileId})
         .then(({data:user})=>{
             setProfile(user);
+            getBlogs({user_id:user._id})
             setLoader(false)
         })
         .catch(err=>{
@@ -48,9 +51,24 @@ const ProfilePage = () => {
         })
     }
 
-    // const getBlogs=({page=1,user_id})={
-
-    // }
+    const getBlogs=({page=1,user_id})=>{
+        user_id = user_id ==undefined ? blogs.user_id : user_id;
+        axios.post(import.meta.env.VITE_SERVER_DOMAIN+'/search-blogs',{
+            author:user_id,
+            page
+        })
+        .then(async ({data})=>{
+            let formattedData=await FilterPaginationData({
+                state:blogs,
+                data:data.blogs,
+                page,
+                countRoute:'/search-blogs-count',
+                data_to_send:{author:user_id}
+            })
+            formattedData.user_id=user_id;
+            setBlogs(formattedData);
+        })
+    }
 
     useEffect(()=>{
         resetStates();
@@ -87,7 +105,15 @@ const ProfilePage = () => {
                     <AboutUser className='max-md:hidden' bio={bio} social_links={social_links} joinedAt={joinedAt}/>
                 
                 </div>
-            </section>
+
+                <div className='max-md:mt-12 w-full' >
+                    {/* <InPageNavigation
+                        routes={["Blogs Published","About"]}
+                    >
+
+                    </InPageNavigation> */}
+                </div>
+            </section> 
         }
        </AnimationWrapper>
     )
