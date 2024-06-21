@@ -36,14 +36,14 @@ const HomePage = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + '/latest-blogs', { page })
             .then(async ({ data }) => {
 
-                console.log(data.blogs)
+                // console.log(data.blogs)
                 let formaettedData = await FilterPaginationData({
                     state: blogs,
                     data: data.blogs,
                     page,
                     countRoute: "/all-latest-blogs-count"
                 })
-                console.log(formaettedData);
+                // console.log(formaettedData);
                 setBlogs(formaettedData);
             })
             .catch(err => {

@@ -9,9 +9,16 @@
 #     "password":"Spider123"
 # }
 
+# POST   http://localhost:3000/get-blog
+# Content-Type:application/json 
+
+# {
+#     "blog_id":"JavaScriptzlF54jr2NPQlK4lW7tnAv"
+# }
+
 POST   http://localhost:3000/get-profile
 Content-Type:application/json 
 
 {
-    "name":"maha"
+    "name":"mahadali9927"
 }
