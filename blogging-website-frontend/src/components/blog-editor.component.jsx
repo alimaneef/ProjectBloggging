@@ -51,6 +51,7 @@ const BlogEditor = () => {
                 return toast.error(err);
             })
         }
+        // else toast.dismiss(loadingToast);
     }
 
     const handleTitleKeyDown=(e)=>{
