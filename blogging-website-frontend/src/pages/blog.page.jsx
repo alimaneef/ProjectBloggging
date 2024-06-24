@@ -31,7 +31,7 @@ const BlogPage = () => {
 
     const [loading, setLoading] = useState(true)
 
-    let { title, content, banner, author: { personal_info: { fullname, username: author_username, profile_img: prof_img } }, publishedAt } = blog;
+    let { title, content, banner, author: { personal_info: { fullname, username: author_username, profile_img} }, publishedAt } = blog;
 
 
     const fetchBlogs = () => {
@@ -92,7 +92,7 @@ const BlogPage = () => {
 
                                 <div className='flex max-sm:flex-col justify-between my-8'>
                                     <div className='flex gap-5 items-start'>
-                                        <img src={prof_img} className='w-12 h-12 rounded-full' alt="prof_img" />
+                                        <img src={profile_img} className='w-12 h-12 rounded-full' alt="prof_img" />
                                         <p className=' capitalize'>
                                             {fullname}
                                             <br />
