@@ -25,7 +25,7 @@ const BlogPostCard = ({content , author}) => {
             <span className='btn-light py-1 px-4'>{tags[0]}</span>
             <span className='ml-3 flex items-center gap-2 text-dark-grey'>
                 <i className="fi fi-rr-heart text-xl"></i>
-                {total_likes}
+                <span className='mb-1'>{total_likes}</span>
             </span>
         </div>
     </div>

@@ -11,6 +11,7 @@ import admin from 'firebase-admin'
 import serviceAccountKey from './reactjs-blogging-website-7fa23-firebase-adminsdk-lvyp3-46088566af.json' assert {type: 'json'}
 import { getAuth } from 'firebase-admin/auth'
 import aws from "aws-sdk"
+import Notification from './Schema/Notification.js'
 
 const server = express();
 let PORT = 3000;
@@ -402,6 +403,54 @@ server.post('/get-blog', (req, res) => {
         .catch(err => {
             return res.status(500).json({ err: err.message });
         })
+})
+
+server.post('/like-blog',verifyJWT,(req,res)=>{
+    let user_id=req.user;
+    let {_id,isLikedByUser}=req.body;
+
+    let incrementVal= !isLikedByUser ? 1 : -1;
+
+    Blog.findOneAndUpdate({_id},{$inc:{'activity.total_likes':incrementVal}})
+    .then(blog=>{
+        if(!isLikedByUser){
+            let like=new Notification({
+                type:'like',
+                blog:_id,
+                notification_for:blog.author,
+                user: user_id
+            })
+
+            like.save().then(notification=>{
+                return res.status(200).json({isLikedByUser:true})
+            })
+        }
+        else{
+            Notification.findOneAndDelete({user:user_id,type:"like",blog:_id})
+            .then(data=>{
+                return res.status(200).json({"likedByUser":false});
+            })
+            .catch(err=>{
+                return res.status(500).json({err:err.message});
+            })
+        }
+    })
+})
+
+server.post('/isliked-by-user',verifyJWT,(req,res)=>{
+    let user_id=req.user
+
+    let {_id}=req.body;
+
+    Notification.exists({user:user_id,type:"like",blog:_id})
+    .then(result=>{
+        return res.status(200).json({result})
+    })
+    .catch(err=>{
+        return res.status(500).json({err:err.message})
+    })
+
+
 })
 
 server.listen(PORT, () => {
