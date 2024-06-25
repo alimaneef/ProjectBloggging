@@ -30,11 +30,13 @@ const BlogPage = () => {
     const [similarBlogs, setSimilarBlogs] = useState(blogStructure);
     const [loading, setLoading] = useState(true);
     const [isLikedByUser,setIsLikedByUser]=useState(false);
+    const [prof_img,setProf_img]=useState('https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg')
 
     let { title, content, banner, author: { personal_info: { fullname, username: author_username, profile_img} }, publishedAt } = blog;
 
 
     const fetchBlogs = () => {
+        if(profile_img) setProf_img(profile_img);
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog", {
             blog_id
         })
@@ -92,12 +94,16 @@ const BlogPage = () => {
 
                                 <div className='flex max-sm:flex-col justify-between my-8'>
                                     <div className='flex gap-5 items-start'>
-                                        <img src={profile_img} className='w-12 h-12 rounded-full' alt="prof_img" />
-                                        <p className=' capitalize'>
+
+                                        {/* Profile image not being displayed properly.  */}
+                                        <img src={prof_img} className='w-12 h-12 rounded-full' alt="prof_img" />
+                                        
+                                        <p classNam1e=' capitalize'>
                                             {fullname}
                                             <br />
                                             <Link to={`/user/${author_username}`} className=' text-twitter hover:underline'>@{author_username}</Link>
                                         </p>
+                                    
                                     </div>
                                     <p className=' text-dark-grey opacity-75 max-sm:mt-4 max-sm:ml-12 max-sm:pl-5'>Published on: {getday(publishedAt)}</p>
                                 </div>
