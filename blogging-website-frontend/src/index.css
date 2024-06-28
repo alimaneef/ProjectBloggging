@@ -124,3 +124,62 @@
 .cdx-settings-button[data-tune='stretched'] {
   display: none;
 }
+
+
+body {
+    --sb-track-color: #F3F3F3;
+    --sb-thumb-color: #8c8a8a;
+    --sb-size: 5px;
+  }
+  
+  body::-webkit-scrollbar {
+    width: var(--sb-size)
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+    border-radius: 10px;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 10px;
+    border: 1px solid #676769;
+  }
+  
+  @supports not selector(::-webkit-scrollbar) {
+    body {
+      scrollbar-color: var(--sb-thumb-color)
+                       var(--sb-track-color);
+    }
+  }
+
+textarea::-webkit-scrollbar {
+    width: 5px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+    border-radius: 10px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 10px;
+    border: 1px solid #676769;
+}
+
+#commScroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+#commScroll::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+    border-radius: 10px;
+}
+
+#commScroll::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 10px;
+    border: 1px solid #676769;
+}

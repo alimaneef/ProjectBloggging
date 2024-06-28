@@ -8,6 +8,7 @@ import { getday } from '../common/date'
 import BlogInteraction from '../components/blog-interaction.component'
 import BlogPostCard from '../components/blog-post.component'
 import BlogContent from '../components/blog-content.component'
+import CommentsContainer, { fetchComments } from '../components/comments.component'
 
 
 export const blogStructure = {
@@ -30,6 +31,10 @@ const BlogPage = () => {
     const [similarBlogs, setSimilarBlogs] = useState(blogStructure);
     const [loading, setLoading] = useState(true);
     const [isLikedByUser,setIsLikedByUser]=useState(false);
+    const [commentsWrapper,setCommentsWrapper]=useState(true);
+    const [totalParentCommentsLoaded,setTotalParentCommentsLoaded]=useState(0);
+    
+    
     const [prof_img,setProf_img]=useState('https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg')
 
     let { title, content, banner, author: { personal_info: { fullname, username: author_username, profile_img} }, publishedAt } = blog;
@@ -40,7 +45,9 @@ const BlogPage = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog", {
             blog_id
         })
-            .then(({ data: { blog } }) => {
+            .then(async ({ data: { blog } }) => {
+
+                blog.comments=await fetchComments({blog_id:blog._id,setParentCommentCountFun:setTotalParentCommentsLoaded})
 
                 setBlog(blog);
 
@@ -73,8 +80,11 @@ const BlogPage = () => {
 
     const resetStates = () => {
         setBlog(blogStructure);
-        setSimilarBlogs(null)
-        setLoading(true)
+        setSimilarBlogs(null);
+        setLoading(true);
+        setIsLikedByUser(false);
+        setCommentsWrapper(false);
+        setTotalParentCommentsLoaded(0);
     }
 
     return (
@@ -84,7 +94,10 @@ const BlogPage = () => {
                     ?
                     <Loader />
                     :
-                    <BlogContext.Provider value={{ blog, setBlog ,isLikedByUser,setIsLikedByUser}}>
+                    <BlogContext.Provider value={{ blog, setBlog ,isLikedByUser,setIsLikedByUser,commentsWrapper,setCommentsWrapper,totalParentCommentsLoaded,setTotalParentCommentsLoaded}}>
+
+                        <CommentsContainer />
+
                         <div className='max-w-[900px] center py-10 max-lg:px-[5vw]'>
 
                             <img src={banner} className='aspect-video rounded-md' alt="banner-image" />
@@ -98,10 +111,10 @@ const BlogPage = () => {
                                         {/* Profile image not being displayed properly.  */}
                                         <img src={prof_img} className='w-12 h-12 rounded-full' alt="prof_img" />
                                         
-                                        <p classNam1e=' capitalize'>
+                                        <p className=' capitalize'>
                                             {fullname}
                                             <br />
-                                            <Link to={`/user/${author_username}`} className=' text-twitter hover:underline'>@{author_username}</Link>
+                                            <Link to={`/user/${author_username}`} className=' text-twitter hover:underline lowercase'>@{author_username}</Link>
                                         </p>
                                     
                                     </div>
