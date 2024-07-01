@@ -197,7 +197,7 @@ server.post('/google-auth', async (req, res) => {
 
 server.post('/create-blog', verifyJWT, (req, res) => {
     let authorId = req.user;
-    let { title, des, banner, tags, content, draft,id } = req.body;
+    let { title, des, banner, tags, content, draft, id } = req.body;
 
     if (!title.length) return res.status(403).json({ error: "You must provide a title." });
 
@@ -216,21 +216,21 @@ server.post('/create-blog', verifyJWT, (req, res) => {
 
     let blog_id = id || title.replace(/[^a-zA-Z0-9]/g, '').replace(/\s+g/, '-').trim() + nanoid();
 
-    if(id){
-        Blog.findOneAndUpdate({blog_id},{title,des,content,banner,tags,draft : draft ? draft : false})
-        .then(blog=>{
-            return res.status(200).json({id:blog.blog_id});
-        })
-        .catch(err=>{
-            return res.status(500).json({err:err.message})
-        })
+    if (id) {
+        Blog.findOneAndUpdate({ blog_id }, { title, des, content, banner, tags, draft: draft ? draft : false })
+            .then(blog => {
+                return res.status(200).json({ id: blog.blog_id });
+            })
+            .catch(err => {
+                return res.status(500).json({ err: err.message })
+            })
     }
-    else{
+    else {
 
         let blog = new Blog({
             title, des, banner, content, tags, author: authorId, blog_id, draft: Boolean(draft)
         })
-    
+
         blog.save().then(blog => {
             let incrementVal = draft ? 0 : 1;
             User.findOneAndUpdate({ _id: authorId }, { $inc: { "account_info.total_posts": incrementVal }, $push: { "blogs": blog._id } })
@@ -241,9 +241,9 @@ server.post('/create-blog', verifyJWT, (req, res) => {
                     return res.status(500).json({ error: "Failed to update total posts." })
                 })
         })
-        .catch(err => {
-            return res.status(500).json({ error: err.message })
-        })
+            .catch(err => {
+                return res.status(500).json({ error: err.message })
+            })
     }
 
 
@@ -391,12 +391,12 @@ server.post('/get-blog', (req, res) => {
             User.findOneAndUpdate({ "personal_info.username": blog.author.personal_info.username }, {
                 $inc: { "account_info.total_reads": incrementVal }
             })
-            .catch(err => {
-                return res.status(500).json({ error: err.message })
-            })
+                .catch(err => {
+                    return res.status(500).json({ error: err.message })
+                })
 
-            if(blog.draft && !draft){
-                return res.status(500).json({error:"You can't access Drafts"})
+            if (blog.draft && !draft) {
+                return res.status(500).json({ error: "You can't access Drafts" })
             }
 
             return res.status(200).json({ blog })
@@ -406,124 +406,172 @@ server.post('/get-blog', (req, res) => {
         })
 })
 
-server.post('/like-blog',verifyJWT,(req,res)=>{
-    let user_id=req.user;
-    let {_id,isLikedByUser}=req.body;
+server.post('/like-blog', verifyJWT, (req, res) => {
+    let user_id = req.user;
+    let { _id, isLikedByUser } = req.body;
 
-    let incrementVal= !isLikedByUser ? 1 : -1;
+    let incrementVal = !isLikedByUser ? 1 : -1;
 
-    Blog.findOneAndUpdate({_id},{$inc:{'activity.total_likes':incrementVal}})
-    .then(blog=>{
-        if(!isLikedByUser){
-            let like=new Notification({
-                type:'like',
-                blog:_id,
-                notification_for:blog.author,
-                user: user_id
-            })
+    Blog.findOneAndUpdate({ _id }, { $inc: { 'activity.total_likes': incrementVal } })
+        .then(blog => {
+            if (!isLikedByUser) {
+                let like = new Notification({
+                    type: 'like',
+                    blog: _id,
+                    notification_for: blog.author,
+                    user: user_id
+                })
 
-            like.save().then(notification=>{
-                return res.status(200).json({isLikedByUser:true})
-            })
-        }
-        else{
-            Notification.findOneAndDelete({user:user_id,type:"like",blog:_id})
-            .then(data=>{
-                return res.status(200).json({"likedByUser":false});
-            })
-            .catch(err=>{
-                return res.status(500).json({err:err.message});
-            })
-        }
-    })
+                like.save().then(notification => {
+                    return res.status(200).json({ isLikedByUser: true })
+                })
+            }
+            else {
+                Notification.findOneAndDelete({ user: user_id, type: "like", blog: _id })
+                    .then(data => {
+                        return res.status(200).json({ "likedByUser": false });
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ err: err.message });
+                    })
+            }
+        })
 })
 
-server.post('/isliked-by-user',verifyJWT,(req,res)=>{
-    let user_id=req.user
+server.post('/isliked-by-user', verifyJWT, (req, res) => {
+    let user_id = req.user
 
-    let {_id}=req.body;
+    let { _id } = req.body;
 
-    Notification.exists({user:user_id,type:"like",blog:_id})
-    .then(result=>{
-        return res.status(200).json({result})
-    })
-    .catch(err=>{
-        return res.status(500).json({err:err.message})
-    })
+    Notification.exists({ user: user_id, type: "like", blog: _id })
+        .then(result => {
+            return res.status(200).json({ result })
+        })
+        .catch(err => {
+            return res.status(500).json({ err: err.message })
+        })
 
 
 })
 
-server.post('/add-comment',verifyJWT,(req,res)=>{
-    let user_id=req.user;
+server.post('/add-comment', verifyJWT, (req, res) => {
+    let user_id = req.user;
 
-    let {_id,comment,replying_to,blog_author}=req.body;
+    let { _id, comment, replying_to, blog_author } = req.body;
 
-    if(!comment.length){
-        res.status(403).json({error:"Write Something to leave a comment"});
+    if (!comment.length) {
+        res.status(403).json({ error: "Write Something to leave a comment" });
     }
 
     // Creating a comment to store in database
 
-    let commentObj=new Comment({
+    let commentObj = {
         blog_id: _id,
         blog_author,
         comment,
-        commented_by:user_id,
-    })
-    commentObj.save().then(commentFile=>{
+        commented_by: user_id,
+    }
 
-        let {comment,commentedAt,children}=commentFile;
+    if (replying_to) {
+        commentObj.parent = replying_to;
+        commentObj.isReply=true;
+    }
 
-        Blog.findOneAndUpdate({_id},{$push:{"comments":commentFile._id},$inc:{"activity.total_comments":1,"activity.total_parent_comments":1}})
-        .then(blog=>{
-            console.log("New comment Created");
-        })
-        .catch(err=> err.message);
+    new Comment(commentObj).save().then(async commentFile => {
 
-        let notificationObj={
-            type:"comment",
+        let { comment, commentedAt, children } = commentFile;
+
+        Blog.findOneAndUpdate({ _id }, { $push: { "comments": commentFile._id }, $inc: { "activity.total_comments": 1, "activity.total_parent_comments": replying_to ? 0 : 1 } })
+            .then(blog => {
+                console.log("New comment Created");
+            })
+            .catch(err => err.message);
+
+        let notificationObj = {
+            type: replying_to ? "reply" : "comment",
             blog: _id,
             notification_for: blog_author,
-            user:user_id,
-            comment:commentFile._id
+            user: user_id,
+            comment: commentFile._id
         }
 
-        new Notification(notificationObj).save().then(notification=>console.log(notification));
+
+        if (replying_to) {
+
+            notificationObj.replied_on_comment = replying_to;
+
+            await Comment.findOneAndUpdate({ _id: replying_to }, { $push: { children: commentFile._id } })
+                .then(replyingToCommentDoc => {
+                    notificationObj.notification_for = replyingToCommentDoc.commented_by;
+                })
+
+        }
+
+        new Notification(notificationObj).save().then(notification => console.log(notification));
 
         return res.status(200).json({
             comment,
             commentedAt,
-            _id:commentFile._id,
+            _id: commentFile._id,
             user_id,
             children
         })
 
     })
-    .catch(err=>err.message)
+    .catch(err => err.message)
 
 })
 
 
-server.post('/get-blog-comments',(req,res)=>{
-    
-    let {blog_id,skip}=req.body;
+server.post('/get-blog-comments', (req, res) => {
+
+    let { blog_id, skip } = req.body;
+
+    let maxLimit = 5;
+
+    Comment.find({ blog_id, isReply: false })
+        .populate("commented_by", "personal_info.username personal_info.fullname personal_info.profile_img")
+        .skip(skip)
+        .limit(maxLimit)
+        .sort({
+            'commentedAt': -1
+        })
+        .then(comment => {
+            return res.status(200).json(comment);
+        })
+        .catch(err => {
+            console.log(err.message);
+            return res.status(500).json({ error: err.message });
+        })
+})
+
+server.post('/get-replies',(req,res)=>{
+
+    let {_id,skip}=req.body;
 
     let maxLimit=5;
 
-    Comment.find({blog_id,isReply:false})
-    .populate("commented_by","personal_info.username personal_info.fullname personal_info.profile_img")
-    .skip(skip)
-    .limit(maxLimit)
-    .sort({
-        'commentedAt':-1
+    Comment.findOne({_id})
+    .populate({
+        path:"children",
+        option:{
+            limit:maxLimit,
+            skip:skip,
+            sort:{'commentedAt':-1}
+        },
+        populate:{
+            path:'commented_by',
+            select:"personal_info.profile_img personal_info.fullname personal_info.username"
+        },
+        select: "-blog_id -updatedAt"
+
     })
-    .then(comment=>{
-        return res.status(200).json(comment);
-    }) 
+    .select("children")
+    .then(doc=>{
+        return res.status(200).json({replies:doc.children})
+    })
     .catch(err=>{
-        console.log(err.message);
-        return res.status(500).json({error:err.message});
+        return res.status(500).json({error:err.message})
     })
 })
 
