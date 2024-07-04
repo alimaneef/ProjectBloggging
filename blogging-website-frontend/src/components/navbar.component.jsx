@@ -26,7 +26,7 @@ const Navbar = () => {
     }
     return (
         <>
-            <nav className='navbar relative'>
+            <nav className='navbar relative z-50'>
 
             <Link to="/" className='flex-none w-10'>
                 <img src={logo} alt="logo" className='w-full' />

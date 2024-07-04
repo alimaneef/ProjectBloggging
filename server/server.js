@@ -98,7 +98,7 @@ server.post('/signup', (req, res) => {
     if (fullname.length < 3) return res.status(403).json({ "error": "Full name must be at least 3 characters long" })
     if (!email.length) return res.status(403).json({ 'error': 'Enter email' })
     if (!emailRegex.test(email)) return res.status(403).json({ 'error': 'Email is invalid' })
-    if (!passwordRegex.test(password)) return res.status(403).json({ 'error': 'Password must be atleast 6 to 20 characters long having a number,uppercase and lowercase letters' })
+    if (!passwordRegex.test(password)) return res.status(403).json({ 'error': 'Password should be 6 to 20 characters long having numeric,uppercase and lowercase letters' })
 
     bcrypt.hash(password, 10, async (err, hashed_password) => {
         let username = await generateUsername(email)
@@ -619,6 +619,45 @@ server.post('/delete-comments',verifyJWT,(req,res)=>{
         else{
             return res.status(403).json({error:"You are not authorized to delete this comment."})
         }
+    })
+})
+
+
+server.post('/change-password',verifyJWT,(req,res)=>{
+
+    let {currentPassword,newPassword}=req.body;
+    if(!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)){
+        return res.status(403).json({error:"Password must be 6 to 20 characters long having numeric,uppercase and lowercase letters"})
+    }
+
+    User.findOne({_id:req.user})
+    .then(user=>{
+        if(user.google_auth){
+            return res.status(403).json({error:"Can't change account password logged in thorugh Google"})
+        }
+        
+        bcrypt.compare(currentPassword,user.personal_info.password,(err,result)=>{
+            if(err){
+                return res.status(500).json({error:"Some error occured while changing the password. Please try after some time."})
+            }
+            if(!result){
+                return res.status(403).json({error:"Incorrect current password"})
+            }
+
+            bcrypt.hash(newPassword,10,(err,hashed_password)=>{
+                User.findOneAndUpdate({_id:req.user},{"personal_info.password":hashed_password})
+                .then(u=>{
+                    return res.status(200).json({status:'Password Changed'})
+                })
+                .catch(err=>{
+                    return res.status(500).json({error:"Some error occured while saving new password"})
+                })
+            })
+        })
+    })
+    .catch(err=>{
+        console.log(err);
+        res.status(500).json({error:"User not found"});
     })
 })
 

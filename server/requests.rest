@@ -8,17 +8,21 @@
 #     "email":"spider@gmail.com",
 #     "password":"Spider123"
 # }
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ODY1ODNiN2YyODYxMGZjNjdiYzQ5MSIsImlhdCI6MTcyMDA4MDQ5MH0.gCWZAUXR1j843nebkreSyZXmmFcPfEYln2Be4fZbnTI
 
-# POST   http://localhost:3000/get-blog
+
+POST   http://localhost:3000/change-password
+Content-Type:application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ODY1ODNiN2YyODYxMGZjNjdiYzQ5MSIsImlhdCI6MTcyMDA4MDQ5MH0.gCWZAUXR1j843nebkreSyZXmmFcPfEYln2Be4fZbnTI
+
+{
+    "currentPassword":"WayBackHome@1",
+    "newPassword":"WayBackHome@2"
+}
+
+# POST   http://localhost:3000/get-profile
 # Content-Type:application/json 
 
 # {
-#     "blog_id":"JavaScriptzlF54jr2NPQlK4lW7tnAv"
+#     "name":"mahadali9927"
 # }
-
-POST   http://localhost:3000/get-profile
-Content-Type:application/json 
-
-{
-    "name":"mahadali9927"
-}
