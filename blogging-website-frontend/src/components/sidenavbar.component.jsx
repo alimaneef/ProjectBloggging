@@ -13,7 +13,7 @@ const SideNav = () => {
 
     let activeTabLine=useRef();
     let sideBarIconTab=useRef();
-    let pageStateTab=useRef();
+    let stateTab=useRef();
 
 
     const changePageState=(e)=>{
@@ -30,23 +30,23 @@ const SideNav = () => {
 
     useEffect(()=>{
         setShowSideNav(false);
-        pageStateTab.current.click;
+        if(stateTab!=null && stateTab.current!=null && stateTab.current.click()) stateTab.current.click();
     },[pageState])
 
     return (
     access_token ==null
     ?
-    <Navigate to={'/signin'} />
+    <Navigate to='/signin' />
     :
     <>
         <section className='flex relative gap-10 py-0 m-0 max-md:flex-col'>
             <div className='sticky top-[80px] z-30'>
 
-            <div className='md-hidden bg-white py-1 border-b border-grey flex flex-nowrap overflow-x-hidden'>
+            <div className=' md:hidden bg-white py-1 border-b border-grey flex flex-nowrap overflow-x-hidden'>
                 <button ref={sideBarIconTab} className='p-5 capitalize' onClick={changePageState}>
                     <i className='fi fi-rr-bars-staggered pointer-events-none'></i>
                 </button>
-                <button ref={pageStateTab} className='p-5 capitalize' onClick={changePageState}>
+                <button ref={stateTab} className='p-5 capitalize' onClick={changePageState}>
                     {pageState}
                 </button>
                 <hr ref={activeTabLine} className='absolute bottom-0 duration-500'/>
