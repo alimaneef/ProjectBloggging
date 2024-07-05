@@ -1,22 +1,138 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { UserContext } from '../App'
 import axios from 'axios';
 import { profileDataStructure } from './profile.page';
 import AnimationWrapper from '../common/page-animation';
 import Loader from '../components/loader.component';
-import { Toaster } from 'react-hot-toast';
+import { Toaster,toast } from 'react-hot-toast';
 import InputBox from '../components/input.component';
+import { uploadImage } from '../common/aws';
+import { storeInSession } from '../common/session';
 
 const EditProfile = () => {
 
 
-    let {userAuth,userAuth:{access_token,username}}=useContext(UserContext);
+    let {userAuth,userAuth:{access_token,username},setUserAuth}=useContext(UserContext);
+
+    let profileImgEl=useRef();
+    let editProfForm=useRef();
+
+    const [updatedProfImg,setUpdatedProfImg]=useState(null);
 
     const [profile,setProfile]=useState(profileDataStructure);
 
     let {personal_info:{fullname,username:profile_username,profile_img,email,bio},social_links}=profile;
 
     const [loading,setLoading]=useState(true);
+
+    let bioLimit=150;
+
+    const [charactersLeft,setCharactersLeft]=useState(bioLimit);
+
+    const handleCharacterChange=(e)=>{
+        setCharactersLeft(bioLimit-((e.target).value).length);
+    }
+
+    const handleImagePreview=(e)=>{
+       
+        let img=e.target.files[0];
+        
+        profileImgEl.current.src=URL.createObjectURL(img);
+        setUpdatedProfImg(img);
+
+    }
+
+    const handleImageUpload=(e)=>{
+        e.preventDefault();
+        if(updatedProfImg){
+            let loadingToast=toast.loading("Uploading...");
+            e.target.setAttribute('disabled',true);
+
+            uploadImage(updatedProfImg)
+            .then(url=>{
+                if(url){
+                    axios.post(import.meta.env.VITE_SERVER_DOMAIN+'/update-profile-img',{url},{
+                        headers:{
+                            Authorization:`Bearer ${access_token}`
+                        }
+                    })
+                    .then(({data})=>{
+                        let newUserAuth={...userAuth,profile_img:data.profile_img}
+
+                        storeInSession('user',JSON.stringify(newUserAuth));
+
+                        setUserAuth(newUserAuth);
+
+                        setUpdatedProfImg(null);
+                        toast.dismiss(loadingToast);
+                        e.target.reomveAttribute('disabled');
+                        toast.success('Uploaded 👍');
+                    })
+                    .catch(({response})=>{
+                        toast.dismiss(loadingToast);
+                        e.target.reomveAttribute('disabled');
+
+                        toast.error(response.data.error);
+                    })
+                }
+            })
+            .catch(err=>{
+                console.log(err);
+            })
+        }
+    }
+
+    const handleSubmit=(e)=>{
+        e.preventDefault();
+
+        let form = new FormData(editProfForm.current);
+
+        let formData={};
+
+        for(let [key,value] of form.entries()){
+            formData[key]=value;
+        }
+
+        let {username,bio,youtube,facebook,twitter,github,instagram,website}=formData;
+
+        if(username.length<3){
+            return toast.error("Username should have at least 3 characters");
+        }
+        if(bio.length>bioLimit){
+            return toast.error(`Bio should not be more than ${bioLimit}`);
+        }
+
+        let loadingToast=toast.loading("Updating...");
+        e.target.setAttribute('disabled',true);
+
+        axios.post(import.meta.env.VITE_SERVER_DOMAIN+'/update-profile',{
+            username,
+            bio,
+            social_links:{youtube,facebook,twitter,github,instagram,website}
+        },{
+            headers:{
+                Authorization:`Bearer ${access_token}`
+            }
+        })
+        .then(({data})=>{
+
+            if(userAuth.username!=data.username){
+                let newUserAuth={...userAuth,username:data.username};
+                storeInSession("user",JSON.stringify(newUserAuth));
+                setUserAuth(newUserAuth);
+            }
+
+            toast.dismiss(loadingToast);
+            e.target.removeAttribute('disabled');
+            toast.success("Profile updated")
+        })
+        .catch(({response})=>{
+            toast.dismiss(loadingToast);
+            e.target.removeAttribute('disabled');
+            toast.error(response.data.error)
+        })
+
+    }
 
     useEffect(()=>{
 
@@ -34,6 +150,7 @@ const EditProfile = () => {
 
     },[access_token])
 
+
   return (
     <AnimationWrapper>
         {
@@ -41,7 +158,7 @@ const EditProfile = () => {
             ?
             <Loader/>
             :
-            <form>
+            <form ref={editProfForm}>
                 <Toaster/>
                 <h1 className='max-md:hidden'>Edit Profile</h1>
                 <div className='flex flex-col lg:flex-row items-start py-10 gap-8 lg:gap-10'>
@@ -53,11 +170,13 @@ const EditProfile = () => {
                             justify-center text-white bg-black/80 opacity-0 hover:opacity-100 cursor-pointer'>
                                 Upload Image
                             </div>
-                            <img src={profile_img} alt="" />
+                            <img src={profile_img} ref={profileImgEl} alt="" />
                         </label>
-                        <input type="file" id='uploadImg' accept='.jpeg, .png , .jpg' hidden />
+                        <input type="file" id='uploadImg' accept='.jpeg, .png , .jpg' hidden onChange={handleImagePreview} />
 
-                        <button className='btn-light mt-5 max-lg:center lg:w-full px-10'>Upload</button>
+                        <button className='btn-light mt-5 max-lg:center lg:w-full px-10'
+                        onClick={handleImageUpload}
+                        >Upload</button>
 
                     </div>
 
@@ -79,18 +198,25 @@ const EditProfile = () => {
                         <p className='text-dark-grey -mt-3'>Username will be used to search user and will be visible to all users.</p>
 
 
-                        
+                        <textarea name="bio" maxLength={bioLimit} defaultValue={bio} className='input-box h-64 lg:h-40 resize-none leading-7 mt-5 pl-5' placeholder='Bio' onChange={handleCharacterChange}></textarea>
+
+                        <p className='mt-1 text-dark-grey'>{charactersLeft} characters left</p>
+                        <p className='my-6 text-dark-grey'>Add your Social Handles below :-</p>
+
+                        <div className='md:grid md:grid-cols-2 gap-x-6'>
+                            {
+                                Object.keys(social_links).map((key,i)=>{
+                                    let link=social_links[key];
+                                    return <InputBox key={i} name={key} type='text' value={link} placeholder='https://' icon={"fi "+(key!='website' ? 'fi-brands-'+key : 'fi-rs-globe')}/>
+                                })
+                            }
+                        </div>
+
+                        <button className='btn-dark w-auto px-10 cursor-pointer'
+                        onClick={handleSubmit}
+                        >Update</button>
 
                     </div>
-
-                
-                
-                
-                
-                
-                
-                
-                
                 
                 </div>
             </form>
