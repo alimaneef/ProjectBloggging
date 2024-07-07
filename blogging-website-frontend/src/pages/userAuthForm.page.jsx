@@ -61,7 +61,7 @@ const UserAuthForm = ({type}) => {
       let formData={
         access_token:user.accessToken
       }
-      console.log(formData)
+      // console.log(formData)
       userAuthThroughServer(serverRoute,formData)
       // console.log(user)
     })

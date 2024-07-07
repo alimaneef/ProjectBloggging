@@ -38,7 +38,6 @@ const Notifications = () => {
                 data_to_send:{filter},
                 user:access_token
             })
-            console.log(formatedData)
             setNotifications(formatedData);
         })
         .catch(err=>{
@@ -62,10 +61,10 @@ const Notifications = () => {
     <div>
         <h1 className='max-md:hidden'>Recent Notifications</h1>
 
-        <div className='my-8 flex gap-6 '>
+        <div className='my-8 flex gap-6 max-sm:grid max-sm:grid-cols-2 '>
             {
                 filters.map((filterName,i)=>{
-                    return <button className={' duration-500 py-2 '+(filter==filterName ? 'btn-dark' : 'btn-light')} key={i}
+                    return <button className={'duration-500 py-2 '+(filter==filterName ? 'btn-dark' : 'btn-light')} key={i}
                     onClick={handleFilter}
                     >{filterName}</button>
                 })

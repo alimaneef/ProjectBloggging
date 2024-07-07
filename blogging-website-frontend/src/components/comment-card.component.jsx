@@ -25,6 +25,7 @@ const CommentCard = ({ index, leftVal, commentData }) => {
         }catch{
             startingPoint=undefined
         }
+        return startingPoint;
     }
 
     const removeCommentsCards = (startingPoint,isDelete=false) => {

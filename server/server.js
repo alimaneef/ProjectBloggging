@@ -593,7 +593,7 @@ const deleteComments = (_id) => {
                 console.log('Comment Notification Deleted')
             })
 
-            Notification.findOneAndUpdate({ reply: _id }, { $unset: { reply: 1 } }).then(notification => console.log('Reply Notification Deleted'))
+            Notification.findOneAndDelete({ reply: _id }, { $unset: { reply: 1 } }).then(notification => console.log('Reply Notification Deleted'))
 
             Blog.findOneAndUpdate({ _id: comment.blog_id }, { $pull: { comments: _id }, $inc: { "activity.total_comments": -1 }, "activity.total_parent_comments": comment.parent ? 0 : -1 })
                 .then(blog => {
