@@ -28,6 +28,10 @@ const BlogInteraction = () => {
         }
     },[])
 
+    useEffect(()=>{
+
+    },[total_comments,total_likes])
+
     const handleLike=()=>{ 
         if(access_token){
             // logged In

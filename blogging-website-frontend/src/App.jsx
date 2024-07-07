@@ -12,27 +12,43 @@ import BlogPage from "./pages/blog.page";
 import SideNav from "./components/sidenavbar.component";
 import ChangePassword from "./pages/change-password.page";
 import EditProfile from "./pages/edit-profile.page";
+import Notifications from "./pages/notifications.page";
 
 
 export const UserContext=createContext({})
+export const ThemeContext=createContext({});
 
 const App = () => {
     
     const [userAuth,setUserAuth]=useState({})
+    const [theme,setTheme]=useState('light');
 
      useEffect(()=>{
         let userInSession=lookInSession('user');
+        let themeInSession=lookInSession('theme');
         userInSession ? setUserAuth(JSON.parse(userInSession)) : setUserAuth({access_token:null})
+
+        if(themeInSession){
+            setTheme(()=> {
+                document.body.setAttribute('data-theme',themeInSession);
+                return themeInSession;
+            })
+        }
+        else document.body.setAttribute('data-theme',theme);
      },[])
 
 
     return (
-        <UserContext.Provider value={{userAuth,setUserAuth}}>
+        <ThemeContext.Provider value={{theme,setTheme}}>
+            <UserContext.Provider value={{userAuth,setUserAuth}}>
         <Routes>
             <Route path="/editor" element={<Editor/>}></Route>
             <Route path="/editor/:blog_id" element={<Editor/>}></Route>
             <Route path="/" element={<Navbar/>}>
                 <Route index element={<HomePage/>}></Route>
+                <Route path="dashboard" element={<SideNav/>}>
+                    <Route path="notifications" element={<Notifications></Notifications>}></Route>
+                </Route>
                 <Route path="settings" element={<SideNav/>}>
                     <Route path="edit-profile" element={<EditProfile></EditProfile>} />
                     <Route path="change-password" element={<ChangePassword></ChangePassword>} />
@@ -45,7 +61,8 @@ const App = () => {
                 <Route path="*" element={<PageNotFound></PageNotFound>}></Route>
             </Route>
         </Routes> 
-        </UserContext.Provider>
+            </UserContext.Provider>
+        </ThemeContext.Provider>
     )
 }
 

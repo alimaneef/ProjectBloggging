@@ -457,7 +457,7 @@ server.post('/isliked-by-user', verifyJWT, (req, res) => {
 server.post('/add-comment', verifyJWT, (req, res) => {
     let user_id = req.user;
 
-    let { _id, comment, replying_to, blog_author } = req.body;
+    let { _id, comment, replying_to, blog_author, notification_id } = req.body;
 
     if (!comment.length) {
         res.status(403).json({ error: "Write Something to leave a comment" });
@@ -474,7 +474,7 @@ server.post('/add-comment', verifyJWT, (req, res) => {
 
     if (replying_to) {
         commentObj.parent = replying_to;
-        commentObj.isReply=true;
+        commentObj.isReply = true;
     }
 
     new Comment(commentObj).save().then(async commentFile => {
@@ -505,6 +505,11 @@ server.post('/add-comment', verifyJWT, (req, res) => {
                     notificationObj.notification_for = replyingToCommentDoc.commented_by;
                 })
 
+            if (notification_id) {
+                Notification.findOneAndUpdate({ _id: notification_id }, { reply: commentFile._id })
+                    .then(notification => console.log('Notification Updated'))
+            }
+
         }
 
         new Notification(notificationObj).save().then(notification => console.log(notification));
@@ -518,7 +523,7 @@ server.post('/add-comment', verifyJWT, (req, res) => {
         })
 
     })
-    .catch(err => err.message)
+        .catch(err => err.message)
 
 })
 
@@ -545,184 +550,267 @@ server.post('/get-blog-comments', (req, res) => {
         })
 })
 
-server.post('/get-replies',(req,res)=>{
+server.post('/get-replies', (req, res) => {
 
-    let {_id,skip}=req.body;
+    let { _id, skip } = req.body;
 
-    let maxLimit=5;
+    let maxLimit = 5;
 
-    Comment.findOne({_id})
-    .populate({
-        path:"children",
-        options:{
-            limit:maxLimit,
-            skip:skip,
-            sort:{'commentedAt':-1}
-        },
-        populate:{
-            path:'commented_by',
-            select:"personal_info.profile_img personal_info.fullname personal_info.username"
-        },
-        select: "-blog_id -updatedAt"
+    Comment.findOne({ _id })
+        .populate({
+            path: "children",
+            options: {
+                limit: maxLimit,
+                skip: skip,
+                sort: { 'commentedAt': -1 }
+            },
+            populate: {
+                path: 'commented_by',
+                select: "personal_info.profile_img personal_info.fullname personal_info.username"
+            },
+            select: "-blog_id -updatedAt"
 
-    })
-    .select("children")
-    .then(doc=>{
-        return res.status(200).json({replies:doc.children})
-    })
-    .catch(err=>{
-        return res.status(500).json({error:err.message})
-    })
+        })
+        .select("children")
+        .then(doc => {
+            return res.status(200).json({ replies: doc.children })
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.message })
+        })
 })
 
 
-const deleteComments=(_id)=>{
-    Comment.findOneAndDelete({_id})
-    .then(comment=>{
-        if(comment.parent){
-            Comment.findOneAndUpdate({_id:comment.parent},{$pull:{children:_id}})
-            .then(data=>console.log("Parent Comment Deleted"))
-            .catch(err=>console.log(err));
-        }
-        Notification.findOneAndDelete({comment:_id}).then(notification=>{
-            console.log('Comment Notification Deleted')
-        })
-
-        Notification.findOneAndDelete({reply: _id}).then(notification=>console.log('Reply Notification Deleted'))
-
-        Blog.findOneAndUpdate({_id:comment.blog_id},{$pull:{comments:_id},$inc:{"activity.total_comments":-1},"activity.total_parent_comments":comment.parent ? 0 : -1})
-        .then(blog=>{
-            if(comment.children.length){
-                comment.children.map(replies=>{
-                    deleteComments(replies)
-                })
+const deleteComments = (_id) => {
+    Comment.findOneAndDelete({ _id })
+        .then(comment => {
+            if (comment.parent) {
+                Comment.findOneAndUpdate({ _id: comment.parent }, { $pull: { children: _id } })
+                    .then(data => console.log("Parent Comment Deleted"))
+                    .catch(err => console.log(err));
             }
+            Notification.findOneAndDelete({ comment: _id }).then(notification => {
+                console.log('Comment Notification Deleted')
+            })
+
+            Notification.findOneAndUpdate({ reply: _id }, { $unset: { reply: 1 } }).then(notification => console.log('Reply Notification Deleted'))
+
+            Blog.findOneAndUpdate({ _id: comment.blog_id }, { $pull: { comments: _id }, $inc: { "activity.total_comments": -1 }, "activity.total_parent_comments": comment.parent ? 0 : -1 })
+                .then(blog => {
+                    if (comment.children.length) {
+                        comment.children.map(replies => {
+                            deleteComments(replies)
+                        })
+                    }
+                })
         })
-    })
-    .catch(err=>{
-        console.log(err.message);
-    })
+        .catch(err => {
+            console.log(err.message);
+        })
 }
 
-server.post('/delete-comments',verifyJWT,(req,res)=>{
+server.post('/delete-comments', verifyJWT, (req, res) => {
 
-    let user_id=req.user;
+    let user_id = req.user;
 
-    let {_id}=req.body;
+    let { _id } = req.body;
 
-    Comment.findOne({_id})
-    .then(comment=>{
-        if(user_id==comment.commented_by || user_id==comment.blog_author){
-            deleteComments(_id);
-            return res.status(200).json({status:'done'});
-        }
-        else{
-            return res.status(403).json({error:"You are not authorized to delete this comment."})
-        }
-    })
+    Comment.findOne({ _id })
+        .then(comment => {
+            if (user_id == comment.commented_by || user_id == comment.blog_author) {
+                deleteComments(_id);
+                return res.status(200).json({ status: 'done' });
+            }
+            else {
+                return res.status(403).json({ error: "You are not authorized to delete this comment." })
+            }
+        })
 })
 
 
-server.post('/change-password',verifyJWT,(req,res)=>{
+server.post('/change-password', verifyJWT, (req, res) => {
 
-    let {currentPassword,newPassword}=req.body;
-    if(!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)){
-        return res.status(403).json({error:"Password must be 6 to 20 characters long having numeric,uppercase and lowercase letters"})
+    let { currentPassword, newPassword } = req.body;
+    if (!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)) {
+        return res.status(403).json({ error: "Password must be 6 to 20 characters long having numeric,uppercase and lowercase letters" })
     }
 
-    User.findOne({_id:req.user})
-    .then(user=>{
-        if(user.google_auth){
-            return res.status(403).json({error:"Can't change account password logged in thorugh Google"})
-        }
-        
-        bcrypt.compare(currentPassword,user.personal_info.password,(err,result)=>{
-            if(err){
-                return res.status(500).json({error:"Some error occured while changing the password. Please try after some time."})
-            }
-            if(!result){
-                return res.status(403).json({error:"Incorrect current password"})
+    User.findOne({ _id: req.user })
+        .then(user => {
+            if (user.google_auth) {
+                return res.status(403).json({ error: "Can't change account password logged in thorugh Google" })
             }
 
-            bcrypt.hash(newPassword,10,(err,hashed_password)=>{
-                User.findOneAndUpdate({_id:req.user},{"personal_info.password":hashed_password})
-                .then(u=>{
-                    return res.status(200).json({status:'Password Changed'})
-                })
-                .catch(err=>{
-                    return res.status(500).json({error:"Some error occured while saving new password"})
+            bcrypt.compare(currentPassword, user.personal_info.password, (err, result) => {
+                if (err) {
+                    return res.status(500).json({ error: "Some error occured while changing the password. Please try after some time." })
+                }
+                if (!result) {
+                    return res.status(403).json({ error: "Incorrect current password" })
+                }
+
+                bcrypt.hash(newPassword, 10, (err, hashed_password) => {
+                    User.findOneAndUpdate({ _id: req.user }, { "personal_info.password": hashed_password })
+                        .then(u => {
+                            return res.status(200).json({ status: 'Password Changed' })
+                        })
+                        .catch(err => {
+                            return res.status(500).json({ error: "Some error occured while saving new password" })
+                        })
                 })
             })
         })
-    })
-    .catch(err=>{
-        console.log(err);
-        res.status(500).json({error:"User not found"});
-    })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({ error: "User not found" });
+        })
 })
 
 
-server.post('/update-profile-img',verifyJWT,(req,res)=>{
-    let {url}=req.body;
-    
-    User.findOneAndUpdate({_id:req.user,},{"personal_info.profile_img":url})
-    .then(()=>{
-        return res.status(200).json({profile_img:url}); 
-    })
-    .catch(err=>{
-        return res.status(500).json({error:err.message});
-    })
-})  
+server.post('/update-profile-img', verifyJWT, (req, res) => {
+    let { url } = req.body;
 
-server.post('/update-profile',verifyJWT,(req,res)=>{
-    let {username,bio,social_links}=req.body;
+    User.findOneAndUpdate({ _id: req.user, }, { "personal_info.profile_img": url })
+        .then(() => {
+            return res.status(200).json({ profile_img: url });
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.message });
+        })
+})
 
-    let bioLimit=150;
+server.post('/update-profile', verifyJWT, (req, res) => {
+    let { username, bio, social_links } = req.body;
 
-    if(username.length<3){
-        return res.status(403).json({error:'Username should have at least 3 characters'});
-    }
-    
-    if(bio.length>bioLimit){
-        return res.status(403).json({error:`Bio should be under ${bioLimit} characters`});
+    let bioLimit = 150;
+
+    if (username.length < 3) {
+        return res.status(403).json({ error: 'Username should have at least 3 characters' });
     }
 
-    let socialLinksArr=Object.keys(social_links);
+    if (bio.length > bioLimit) {
+        return res.status(403).json({ error: `Bio should be under ${bioLimit} characters` });
+    }
+
+    let socialLinksArr = Object.keys(social_links);
     console.log(socialLinksArr);
-    try{
-        for(let i=0;i<(socialLinksArr.length);i++){
-            if(social_links[socialLinksArr[i]].length){
-                let hostname=new URL(social_links[socialLinksArr[i]]).hostname;
-                
-                if(!hostname.includes(`${socialLinksArr[i]}.com`) && socialLinksArr[i]!='website'){
-                    return res.status(403).json({error:`${socialLinksArr[i]} link is invalid. Please enter a valid link`})
+    try {
+        for (let i = 0; i < (socialLinksArr.length); i++) {
+            if (social_links[socialLinksArr[i]].length) {
+                let hostname = new URL(social_links[socialLinksArr[i]]).hostname;
+
+                if (!hostname.includes(`${socialLinksArr[i]}.com`) && socialLinksArr[i] != 'website') {
+                    return res.status(403).json({ error: `${socialLinksArr[i]} link is invalid. Please enter a valid link` })
                 }
             }
         }
     }
-    catch(err){
-        return res.status(500).json({error:"You must provide complete social links with http(s) included"})
+    catch (err) {
+        return res.status(500).json({ error: "You must provide complete social links with http(s) included" })
     }
 
-    let updateObj={
-        "personal_info.username":username,
-        "personal_info.bio":bio,
+    let updateObj = {
+        "personal_info.username": username,
+        "personal_info.bio": bio,
         social_links
     }
 
-    User.findOneAndUpdate({_id:req.user},updateObj,{
-        runValidators:true
+    User.findOneAndUpdate({ _id: req.user }, updateObj, {
+        runValidators: true
     })
-    .then(()=>{
-        return res.status(200).json({username})
-    })
-    .catch(err=>{
-        if(err.code==11000){
-            return res.status(409).json({error:"Username is already taken"})
-        }
-        return res.status(500).json({error:err.message});
-    })
+        .then(() => {
+            return res.status(200).json({ username })
+        })
+        .catch(err => {
+            if (err.code == 11000) {
+                return res.status(409).json({ error: "Username is already taken" })
+            }
+            return res.status(500).json({ error: err.message });
+        })
 
+})
+
+
+server.get('/new-notification', verifyJWT, (req, res) => {
+    let user_id = req.user;
+
+    Notification.exists({ notification_for: user_id, seen: false, user: { $ne: user_id } })
+        .then(result => {
+            if (result) {
+                return res.status(200).json({ new_notification_available: true })
+            }
+            else {
+                return res.status(200).json({ new_notification_available: false })
+            }
+        })
+        .catch(err => {
+            console.log(err.message)
+            return res.status(500).json({ error: err.message });
+        })
+})
+
+server.post('/notifications', verifyJWT, (req, res) => {
+    let user_id = req.user;
+
+    let { page, filter, deletedDocCount } = req.body;
+
+    let maxLimit = 10;
+
+    let findQuery = { notification_for: user_id, user: { $ne: user_id } };
+
+    let skipDocs = (page - 1) * maxLimit;
+
+    if (filter != 'all') {
+        findQuery.type = filter;
+    }
+
+    if (deletedDocCount) {
+        skipDocs -= deletedDocCount;
+    }
+
+    Notification.find(findQuery)
+        .skip(skipDocs)
+        .limit(maxLimit)
+        .populate('blog', 'title blog_id')
+        .populate('user', 'personal_info.fullname personal_info.username personal_info.profile_img')
+        .populate('comment', 'comment ')
+        .populate('reply', 'comment')
+        .sort({ createdAt: -1 })
+        .select('createdAt type seen reply')
+        .then(notifications => {
+
+            Notification.updateMany(findQuery,{seen:true})
+            .skip(skipDocs)
+            .limit(maxLimit)
+            .then(()=>console.log('Notification Seen'))
+
+            return res.status(200).json({ notifications });
+        })
+        .catch(err => {
+            console.log(err.message);
+            return res.status(500).json({ error: err.message });
+        })
+})
+
+server.post('/all-notifications-count', verifyJWT, (req, res) => {
+
+    let user_id = req.user;
+
+    let { filter } = req.body;
+
+    let findQuery = { notification_for: user_id, user: { $ne: user_id } }
+
+    if (filter != 'all') {
+        findQuery.type = filter;
+    }
+
+    Notification.countDocuments(findQuery)
+        .then(count => {
+            return res.status(200).json({ totalDocs: count });
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.message });
+        })
 })
 
 server.listen(PORT, () => {

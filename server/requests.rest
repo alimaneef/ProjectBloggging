@@ -11,14 +11,10 @@
 # eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ODY1ODNiN2YyODYxMGZjNjdiYzQ5MSIsImlhdCI6MTcyMDA4MDQ5MH0.gCWZAUXR1j843nebkreSyZXmmFcPfEYln2Be4fZbnTI
 
 
-POST   http://localhost:3000/change-password
+GET   http://localhost:3000/new-notification
 Content-Type:application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ODY1ODNiN2YyODYxMGZjNjdiYzQ5MSIsImlhdCI6MTcyMDA4MDQ5MH0.gCWZAUXR1j843nebkreSyZXmmFcPfEYln2Be4fZbnTI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ODY1ODNiN2YyODYxMGZjNjdiYzQ5MSIsImlhdCI6MTcyMDIwMzk0M30.8paHt4-YsXNeFRZYf4mj_sETicDVFI_dB-k3-F254tk
 
-{
-    "currentPassword":"WayBackHome@1",
-    "newPassword":"WayBackHome@2"
-}
 
 # POST   http://localhost:3000/get-profile
 # Content-Type:application/json 

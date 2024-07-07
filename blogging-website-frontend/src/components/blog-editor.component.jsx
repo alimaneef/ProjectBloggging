@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useEffect} from 'react'
-import logo from '../imgs/logo.png'
+import logoDark from '../imgs/logo-dark.png'
+import logoLight from '../imgs/logo-light.png'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AnimationWrapper from '../common/page-animation'
-import defaultBanner from '../imgs/blog banner.png'
+import defaultBannerDark from '../imgs/blog banner dark.png'
+import defaultBannerLight from '../imgs/blog banner light.png'
 import { EditorContext } from '../pages/editor.pages'
 import { uploadImage } from '../common/aws'
 import { Toaster,toast } from 'react-hot-toast'
 import EditorJS from "@editorjs/editorjs"
 import { tools } from './tools.component'
 import axios from 'axios'
-import { UserContext } from '../App'
+import { ThemeContext, UserContext } from '../App'
 
 const BlogEditor = () => {
    
@@ -22,6 +24,8 @@ const BlogEditor = () => {
 
 
     let navigate=useNavigate();
+
+    let {theme}=useContext(ThemeContext);
 
     useEffect(()=>{
         if(!textEditor.isReady){
@@ -70,7 +74,7 @@ const BlogEditor = () => {
     }
     const handleError=(e)=>{
         let img=e.target;
-        img.src=defaultBanner
+        img.src= theme == 'light' ? defaultBannerLight : defaultBannerDark;
     }
 
 
@@ -139,7 +143,7 @@ const BlogEditor = () => {
     <>
         <nav className='navbar'>
         <Link to='/' className='flex-none w-10'>
-            <img src={logo} alt="logo" />
+            <img src={theme=='light' ? logoDark : logoLight} alt="logo" />
         </Link>
         <p className='max-md:hidden line-clamp-1 w-full'>
             {title.length ? title : 'New Blog'}
@@ -176,7 +180,7 @@ const BlogEditor = () => {
                     </div>
                     <textarea placeholder='Blog Title'
                         defaultValue={title} 
-                        className='text-4xl font-medium w-full h-20 resize-none mt-10 placeholder:opacity-40 leading-tight'
+                        className='text-4xl font-medium w-full h-20 resize-none mt-10 placeholder:opacity-40 leading-tight bg-white'
                         onKeyDown={handleTitleKeyDown}
                         onChange={handleTitleChange}
                         >

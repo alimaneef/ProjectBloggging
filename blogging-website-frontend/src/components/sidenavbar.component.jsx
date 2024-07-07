@@ -4,7 +4,7 @@ import { UserContext } from '../App'
 
 const SideNav = () => {
   
-    let {userAuth:{access_token}}=useContext(UserContext);
+    let {userAuth:{access_token,new_notification_available}}=useContext(UserContext);
 
     let page=location.pathname.split('/')[2];
 
@@ -52,7 +52,7 @@ const SideNav = () => {
                 <hr ref={activeTabLine} className='absolute bottom-0 duration-500'/>
             </div>
 
-                <div className={'min-w-[200px] h-[calc(100vh-40px-60px)] md:h-cover md:sticky top-24 overflow-y-auto p-6 md:pr-0 md:border-grey  md:border-r absolute max-md:top-[64px] bg-white max-md:w-[calc(100%+40px)] max-md:px-16 max-md:-ml-7 duration-500 '+(!showSideNav ? 'max-md:opacity-0 max-md:pointer-events-none' : 'opacity-100 pointer-events-auto')}>
+                <div className={'min-w-[200px] h-[calc(100vh-60px)] md:h-cover md:sticky top-24 overflow-y-auto p-6 md:pr-0 md:border-grey  md:border-r absolute max-md:top-[64px] bg-white max-md:w-[calc(100%+40px)] max-md:px-16 max-md:-ml-7 duration-500 '+(!showSideNav ? 'max-md:opacity-0 max-md:pointer-events-none' : 'opacity-100 pointer-events-auto')}>
                 
             {/* Dashboard  */}
                     <h1 className='text-xl text-dark-grey mb-3'>Dashboard</h1>
@@ -63,10 +63,20 @@ const SideNav = () => {
                         Blogs
                     </NavLink>
                     
-                    <NavLink to="/dashboard/notification" onClick={(e)=>setPageState(e.target.innerText)} className='sidebar-link'>
+                    <NavLink to="/dashboard/notifications" onClick={(e)=>setPageState(e.target.innerText)} className='sidebar-link'>
+                        <div className='relative'>
                         <i className='fi fi-rr-bell'></i>
-                        Notification
+                        {
+                            new_notification_available
+                            ?
+                            <span className='bg-red absolute w-2 h-2 z-10 rounded-full top-0 right-0'></span>
+                            :
+                            ""
+                        }
+                        </div>
+                        Notifications
                     </NavLink>
+
                     
                     <NavLink to="/editor" onClick={(e)=>setPageState(e.target.innerText)} className='sidebar-link'>
                         <i className='fi fi-rr-file-edit'></i>
