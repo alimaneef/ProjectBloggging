@@ -165,7 +165,7 @@ const BlogEditor = () => {
                         <label htmlFor="uploadBanner">
                             <img 
                             src={banner} alt="banner" 
-                            className='z-20'
+                            className='z-20 object-cover'
                             onError={handleError}
                             />
                             <input 

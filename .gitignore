@@ -2,3 +2,4 @@ node_modules/
 *.log
 .env
 server/reactjs-blogging-website-7fa23-firebase-adminsdk-lvyp3-46088566af.json
+dist/
